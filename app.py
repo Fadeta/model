@@ -4,7 +4,10 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
+# Daftar penyakit
 diseases = ['White Spot', 'Black Spot', 'Cloudy Eyes', 'Dropsy', 'Fin/Tail Rot', 'Kutu Jangkar']
+
+# Gejala masing-masing penyakit
 symptoms = {
     'White Spot': ['G1', 'G2', 'G3'],
     'Black Spot': ['G1', 'G2', 'G4'],
@@ -14,6 +17,7 @@ symptoms = {
     'Kutu Jangkar': ['G1', 'G14', 'G15']
 }
 
+# Pengobatan untuk masing-masing penyakit
 treatments = {
     'White Spot': 'Menaikkan suhu air: Tingkatkan suhu air secara perlahan hingga 28-30°C selama beberapa hari untuk mempercepat siklus hidup parasit.\nPenggunaan obat: Gunakan obat anti-parasit seperti malachite green atau formalin sesuai petunjuk dosis pada kemasan.\nKarantina: Pindahkan ikan yang terinfeksi ke tank karantina untuk menghindari penyebaran ke ikan lain.\nAerasi: Pastikan ada cukup oksigen dalam air karena peningkatan suhu dapat mengurangi kadar oksigen terlarut.',
     'Black Spot': 'Penggunaan obat anti-parasit: Gunakan praziquantel atau metronidazole sesuai dosis yang dianjurkan.\nKarantina: Pisahkan ikan yang terinfeksi untuk mencegah penularan.\nMembersihkan kolam: Bersihkan kolam dan buang siput yang bisa menjadi inang perantara parasit.',
@@ -23,6 +27,7 @@ treatments = {
     'Kutu Jangkar': 'Pengangkatan manual: Gunakan pinset untuk mengangkat kutu jangkar dari tubuh ikan dengan hati-hati.\nPenggunaan antiparasit: Gunakan antiparasit seperti dimilin atau potassium permanganate sesuai dosis yang dianjurkan.\nKarantina: Pisahkan ikan yang terinfeksi dan obati dalam tank karantina.'
 }
 
+# Deskripsi gejala
 gejala_mapping = {
     'G1': 'Menurunnya kekebalan tubuh atau lemas',
     'G2': 'Badan ikan kurus',
@@ -41,10 +46,12 @@ gejala_mapping = {
     'G15': 'Sering menggesekkan tubuh pada dinding'
 }
 
+# Bobot untuk setiap gejala
 bobot_gejala = {
     'G1': 0.4, 'G2': 0.4, 'G3': 0.8, 'G4': 0.8, 'G5': 0.6, 'G6': 0.8, 'G7': 0.6, 'G8': 0.8, 'G9': 0.8, 'G10': 0.6, 'G11': 0.8, 'G12': 0.8, 'G13': 0.6, 'G14': 0.8, 'G15': 0.6
 }
 
+# Fungsi untuk menggabungkan CF
 def combine_cf(cf1, cf2):
     if cf1 >= 0 and cf2 >= 0:
         return cf1 + cf2 * (1 - cf1)
@@ -53,6 +60,7 @@ def combine_cf(cf1, cf2):
     else:
         return (cf1 + cf2) / (1 - min(abs(cf1), abs(cf2)))
 
+# Fungsi diagnosis penyakit dengan CF
 def diagnosa_penyakit_cf(gejala_cf):
     disease_cf = {}
     for disease, disease_symptoms in symptoms.items():
@@ -118,16 +126,23 @@ def diagnosa():
     if not gejala:
         return jsonify({"error": "Gejala tidak boleh kosong"}), 400
 
+    # Debugging: Print data gejala yang diterima
+    print(f"Received gejala: {gejala}")
+
+    # Menghitung CF untuk setiap gejala
     gejala_cf = {symptom: bobot_gejala[symptom] for symptom in gejala if symptom in bobot_gejala}
+    print(f"Gejala CF: {gejala_cf}")
+
+    # Diagnosa penyakit berdasarkan CF
     disease_cf = diagnosa_penyakit_cf(gejala_cf)
+    print(f"Disease CF: {disease_cf}")
 
     # Mengurutkan penyakit berdasarkan CF dan memilih 3 teratas
     sorted_diseases = sorted(disease_cf.items(), key=lambda item: item[1], reverse=True)[:3]
+    print(f"Sorted diseases: {sorted_diseases}")
 
     result = []
-    top_disease = sorted_diseases[0] if sorted_diseases else None
-    if top_disease:
-        disease, cf = top_disease
+    for disease, cf in sorted_diseases:
         result.append({
             "disease": disease,
             "treatment": treatments[disease],
