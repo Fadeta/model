@@ -62,9 +62,7 @@ def diagnosa_penyakit_cf(gejala_cf):
                 combined_cf = combine_cf(combined_cf, gejala_cf[symptom])
         disease_cf[disease] = combined_cf
 
-    hasil_diagnosa = max(disease_cf, key=disease_cf.get)
-    cf_persen = disease_cf[hasil_diagnosa] * 100
-    return hasil_diagnosa, treatments[hasil_diagnosa], cf_persen
+    return disease_cf
 
 @app.route('/diseases', methods=['GET'])
 def get_diseases():
@@ -121,12 +119,22 @@ def diagnosa():
         return jsonify({"error": "Gejala tidak boleh kosong"}), 400
 
     gejala_cf = {symptom: bobot_gejala[symptom] for symptom in gejala if symptom in bobot_gejala}
-    hasil, treatment, cf_persen = diagnosa_penyakit_cf(gejala_cf)
-    return jsonify({
-        "hasil_diagnosa": hasil,
-        "treatment": treatment,
-        "cf_persen": f"{cf_persen:.2f}%"
-    })
+    disease_cf = diagnosa_penyakit_cf(gejala_cf)
+
+    # Mengurutkan penyakit berdasarkan CF dan memilih 3 teratas
+    sorted_diseases = sorted(disease_cf.items(), key=lambda item: item[1], reverse=True)[:3]
+
+    result = []
+    top_disease = sorted_diseases[0] if sorted_diseases else None
+    if top_disease:
+        disease, cf = top_disease
+        result.append({
+            "disease": disease,
+            "treatment": treatments[disease],
+            "cf_persen": f"{cf * 100:.2f}%"
+        })
+
+    return jsonify(result)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)
