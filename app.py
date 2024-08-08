@@ -126,7 +126,6 @@ def diagnosa():
     if not gejala:
         return jsonify({"error": "Gejala tidak boleh kosong"}), 400
 
-    # Debugging: Print data gejala yang diterima
     print(f"Received gejala: {gejala}")
 
     # Menghitung CF untuk setiap gejala
